@@ -10,8 +10,8 @@
   "plugins": [
     {
       "name": "nrp-nautilus",
-      "description": "Run work on the National Research Platform's Nautilus Kubernetes cluster: access, NRP usage policies, Jobs and Indexed Jobs, GPUs, Ceph storage and S3, the managed LLM endpoint, and the patterns that keep a shared cluster healthy.",
-      "version": "0.2.0",
+      "description": "Run work on the National Research Platform's Nautilus Kubernetes cluster without hurting it: access and NRP policies, taking your code to a running Job, GPUs, Ceph storage and S3, the managed LLM endpoint, and a preflight check that stops the patterns that overload a shared cluster.",
+      "version": "0.3.0",
       "source": "./plugins/nrp-nautilus",
       "keywords": [
         "NRP",
@@ -22,7 +22,8 @@
         "Jobs",
         "GPU",
         "Ceph",
-        "S3"
+        "S3",
+        "LLM"
       ]
     }
   ]

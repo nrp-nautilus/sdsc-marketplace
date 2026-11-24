@@ -74,9 +74,9 @@ These GPUs are scheduled by their own resource name, not `nvidia.com/gpu`:
 | NVIDIA A40 | `nvidia.com/a40` | — |
 | NVIDIA RTX A6000 | `nvidia.com/rtxa6000` | — |
 | NVIDIA Quadro RTX 8000 | `nvidia.com/rtx8000` | — |
-| NVIDIA H100 | `nvidia.com/h100` | Reserved; not user-requestable |
-| NVIDIA H200 | `nvidia.com/h200` | Reserved; not user-requestable |
-| NVIDIA GH200 | `nvidia.com/gh200` | Reserved; not user-requestable |
+| NVIDIA H100 | `nvidia.com/h100` | Quota 0, no access form; `opportunistic` only |
+| NVIDIA H200 | `nvidia.com/h200` | Quota 0, no access form; `opportunistic` only |
+| NVIDIA GH200 | `nvidia.com/gh200` | Quota 0, no access form; `opportunistic` only (arm64, see below) |
 | RTX PRO 6000 Blackwell | `nvidia.com/rtx6000bw` | Exclusive use |
 | Qualcomm Cloud AI 100 Ultra | `qualcomm.com/qaic` | One unit = one SoC (~25B-parameter LLMs) |
 
@@ -101,15 +101,29 @@ it for work that checkpoints to a PVC or S3 and restarts cleanly (with a Job
 
 ## Grace Hopper (GH200, arm64)
 
-Use an arm64 image (for example `nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04`,
-which is multi-arch) and add:
+GH200 nodes are arm64 and carry the taint `nautilus.io/hardware=arm64:NoSchedule`
+(checked on the cluster 2026-11-15; the older key `nautilus.io/arm64` no longer
+exists on any node). Use an arm64 image (for example
+`nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04`, which is multi-arch) and select
+the architecture. NRP's admission webhook then adds the toleration for you:
+
+```yaml
+      nodeSelector:
+        kubernetes.io/arch: arm64
+```
+
+Written out, the toleration it adds is:
 
 ```yaml
       tolerations:
-      - key: nautilus.io/arm64
-        operator: Exists
+      - key: nautilus.io/hardware
+        operator: Equal
+        value: arm64
         effect: NoSchedule
 ```
+
+GH200 quota is 0 in every namespace, so this only schedules with
+`priorityClassName: opportunistic`.
 
 ## Shared Memory
 

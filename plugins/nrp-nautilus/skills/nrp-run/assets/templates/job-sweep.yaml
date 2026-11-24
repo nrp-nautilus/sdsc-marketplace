@@ -1,0 +1,51 @@
+# =============================================================================
+# NRP Nautilus: a sweep as ONE Indexed Job that packs several tasks into each pod.
+# TOTAL_TASKS tasks run in ceil(TOTAL_TASKS / TASKS_PER_POD) pods, `parallelism`
+# at a time. Choose TASKS_PER_POD so a pod works for several minutes at least:
+# thousands of pods that each run for seconds overload the cluster.
+# completions must equal ceil(TOTAL_TASKS / TASKS_PER_POD).
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sweep-<username>
+  labels:
+    owner: <username>
+spec:
+  completionMode: Indexed
+  completions: 50                  # = ceil(5000 / 100)
+  parallelism: 10                  # pods running at once
+  backoffLimitPerIndex: 1          # retry one failed slice, not the whole sweep
+  maxFailedIndexes: 5
+  activeDeadlineSeconds: 28800
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: main
+        image: python:3.12-slim
+        env:
+        - {name: TOTAL_TASKS, value: "5000"}
+        - {name: TASKS_PER_POD, value: "100"}
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          first=$((JOB_COMPLETION_INDEX * TASKS_PER_POD))
+          last=$((first + TASKS_PER_POD - 1))
+          [ "$last" -lt "$TOTAL_TASKS" ] || last=$((TOTAL_TASKS - 1))
+          for task in $(seq "$first" "$last"); do
+            out="/data/results/task-$task.json"
+            [ -s "$out" ] && continue                 # done in an earlier attempt
+            python /data/code/run_task.py --task "$task" --out "$out.tmp" && mv "$out.tmp" "$out"
+          done
+        volumeMounts:
+        - {name: data, mountPath: /data}
+        resources:
+          requests: {cpu: "1", memory: 2Gi}
+          limits:   {cpu: "1", memory: 2Gi}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: data-<username>

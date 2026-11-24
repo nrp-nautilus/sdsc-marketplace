@@ -88,6 +88,28 @@ Add these to the `args` of the `oidc-login get-token` exec entry in the kubeconf
 Tokens last about 30 minutes and renew automatically. After joining a
 namespace (or if access looks stale), run `kubectl oidc-login clean`.
 
+## A ServiceAccount for an Agent
+
+By default an agent uses your own login and can do whatever you can in every
+namespace you belong to. To give it less, a namespace **admin** can create a
+ServiceAccount with a narrow Role in one namespace and hand the agent a
+kubeconfig for it. Members cannot do this themselves: only admins can create
+Roles and RoleBindings.
+
+- Worth it when you hold broad rights (namespace admin, many namespaces, cluster
+  staff), for an agent that runs unattended, and for any agent that runs inside
+  the cluster. Since 2026-11-07 the `default` ServiceAccount has no API token,
+  so a pod that calls the Kubernetes API needs its own ServiceAccount anyway.
+- Do not bind it to `edit` or `admin`: on NRP `edit` can impersonate every
+  ServiceAccount in the namespace. Grant the verbs the agent needs (Jobs, pod
+  logs) and leave out ConfigMaps and Secrets.
+- Workloads it creates are recorded under `system:serviceaccount:<ns>:<name>`
+  in the `nrp.ai/username` annotation, not under your identity, so name the
+  ServiceAccount for its owner.
+- A ServiceAccount limits what the agent can call. It does not limit what the
+  Jobs it creates can do inside the namespace, and it does not protect the
+  cluster from the patterns in the hard rules.
+
 ## Other Entry Points
 
 - **JupyterHub**: https://jupyterhub-west.nrp-nautilus.io — notebooks without kubectl (5 GB home, stops ~1 hour after the browser disconnects).
