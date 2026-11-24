@@ -1,0 +1,20 @@
+# The sweep as an agent without the skills tends to write it: one pod per ten-second task.
+# For the preflight segment of the demo. Do not apply.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-naive-sweep
+spec:
+  completionMode: Indexed
+  completions: 5000
+  parallelism: 200
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: main
+        image: python:3.12-slim
+        command: ["sh", "-c", "python run_task.py --task $JOB_COMPLETION_INDEX --out /data/results/task-$JOB_COMPLETION_INDEX.json"]
+        resources:
+          requests: {cpu: "1", memory: 2Gi}
+          limits:   {cpu: "2", memory: 4Gi}

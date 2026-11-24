@@ -11,7 +11,7 @@ compatibility: Requires kubectl in PATH and a kubeconfig with access to at least
 metadata:
   version: "1.0"
   scheduler: kubernetes
-allowed-tools: Bash(kubectl *) Read Write
+allowed-tools: Bash(kubectl get *) Bash(kubectl describe *) Bash(kubectl logs *) Bash(kubectl config *) Bash(kubectl auth can-i *) Bash(kubectl top *) Read(/${CLAUDE_SKILL_DIR}/**)
 ---
 
 # Kubernetes for Batch Computing

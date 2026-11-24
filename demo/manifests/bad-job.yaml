@@ -1,0 +1,20 @@
+# Deliberately wrong, for the preflight segment of the demo. Do not apply.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-bad-job
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      priorityClassName: system-cluster-critical
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: main
+        image: pytorch/pytorch:latest
+        command: ["sh", "-c", "python train.py; sleep infinity"]
+        env:
+        - {name: CUDA_VISIBLE_DEVICES, value: "0"}
+        resources:
+          limits: {nvidia.com/gpu: 4}

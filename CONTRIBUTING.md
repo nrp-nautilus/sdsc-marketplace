@@ -8,6 +8,10 @@ plugins/<plugin>/.claude-plugin/plugin.json
 plugins/<plugin>/skills/<skill>/SKILL.md # frontmatter: name, description (+ optional compatibility, metadata, allowed-tools)
 plugins/<plugin>/skills/<skill>/references/*.md
 plugins/<plugin>/skills/<skill>/assets/...
+plugins/<plugin>/skills/<skill>/scripts/...   # tools the agent runs (--help, exit codes)
+plugins/<plugin>/hooks/hooks.json            # Claude Code only; must call a script that also works standalone
+tests/                                       # unit tests for scripts
+validation/<name>/                           # live checks with their dated transcripts
 ```
 
 One plugin per system (`nrp-nautilus`, later `expanse`, ...). Generic skills that several systems share
@@ -26,6 +30,10 @@ One plugin per system (`nrp-nautilus`, later `expanse`, ...). Generic skills tha
 
 ```bash
 python3 scripts/check.py
+python3 -m unittest discover -s tests
 ```
+
+A rule about what the cluster does (an admission denial, a default it adds) needs a dated transcript under
+`validation/`: see `validation/nrp-admission/verify.sh`, which uses only server-side dry runs.
 
 Bump the plugin's `version` in both `plugin.json` and `.claude-plugin/marketplace.json` when its skills change.

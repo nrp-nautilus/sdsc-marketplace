@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SKILL_KEYS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
-LINK_RE = re.compile(r"`((?:references|assets)/[^`\s]+)`")
+LINK_RE = re.compile(r"`((?:references|assets|scripts)/[^`\s]+)`")
 errors, warnings = [], []
 
 

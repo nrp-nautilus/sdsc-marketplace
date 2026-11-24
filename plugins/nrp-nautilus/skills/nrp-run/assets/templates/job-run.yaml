@@ -1,0 +1,50 @@
+# =============================================================================
+# NRP Nautilus: run code from a git repository, with a PVC for data and results.
+# Replace every <...>. Create the PVC first (the nrp skill has pvc-cephfs.yaml).
+# Check before applying:
+#   python3 ../nrp/scripts/nrp_preflight.py job-run.yaml
+#   kubectl apply --dry-run=server -f job-run.yaml
+# =============================================================================
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: run-<username>
+  labels:
+    owner: <username>
+spec:
+  backoffLimit: 2                  # retries after a failed pod
+  activeDeadlineSeconds: 14400     # stop after 4 hours; set from the test run
+  ttlSecondsAfterFinished: 86400   # delete the Job and its logs a day after it ends
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: clone
+        image: alpine/git:2.45.2
+        args: ["clone", "--depth=1", "--branch=<branch-or-tag>", "https://github.com/<org>/<repo>.git", "/work/repo"]
+        volumeMounts: [{name: work, mountPath: /work}]
+        resources:
+          requests: {cpu: 500m, memory: 512Mi}
+          limits:   {cpu: 500m, memory: 512Mi}
+      containers:
+      - name: main
+        image: python:3.12-slim                 # pin an image that already has the dependencies
+        workingDir: /work/repo
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          pip install -q -r requirements.txt     # small installs only; build an image otherwise
+          python main.py --input /data/input --output /data/results
+        volumeMounts:
+        - {name: work, mountPath: /work}
+        - {name: data, mountPath: /data}
+        resources:                               # measured in a small test run; requests == limits
+          requests: {cpu: "2", memory: 4Gi}
+          limits:   {cpu: "2", memory: 4Gi}
+      volumes:
+      - name: work
+        emptyDir: {}
+      - name: data
+        persistentVolumeClaim:
+          claimName: data-<username>

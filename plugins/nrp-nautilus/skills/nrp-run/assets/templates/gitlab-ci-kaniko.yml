@@ -1,0 +1,16 @@
+# Builds ./Dockerfile on NRP GitLab's shared runners and pushes it to the
+# project's registry as gitlab-registry.nrp-nautilus.io/<group>/<project>:<short-sha>.
+# Copied unchanged from https://nrp.ai/documentation/userdocs/development/gitlab/
+# (step 3) on 2026-11-24. Commit it as .gitlab-ci.yml at the top of the project.
+image: ghcr.io/osscontainertools/kaniko:debug
+
+stages:
+  - build-and-push
+
+build-and-push-job:
+  stage: build-and-push
+  variables:
+    GODEBUG: 'http2client=0'
+  script:
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --cache=true --push-retry=10 --image-fs-extract-retry=10 --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA --destination $CI_REGISTRY_IMAGE:latest
